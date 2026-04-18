@@ -8,11 +8,15 @@ services:
     build:
       context: ../..
       dockerfile: tools/docker/Dockerfile
-    ports:
-      - "${HTTP_PORT:-8000}:8000"  # Map to different port if needed
+    #ports:
+    #  - "${HTTP_PORT:-8000}:8000"  # Map to different port if needed
+    expose:
+      - 8000
+    networks:
+      - mcp-net
     volumes:
       # Single data directory for all storage
-      - ./data:/app/data
+      - mcp-memory-data:/app/data
 
       # Model cache (prevents re-downloading models on each restart)
       # Uncomment the following line to persist Hugging Face models
@@ -23,7 +27,15 @@ services:
     environment:
       # Mode selection
       - MCP_MODE=http
-      
+      - MCP_STANDALONE_MODE=1
+      #ollama baby
+      - MCP_EXTERNAL_EMBEDDING_URL=http://ollama:11434/api/embed
+      # Optional: Model name (default: nomic-embed-text)
+      - MCP_EXTERNAL_EMBEDDING_MODEL=nomic-embed-text
+      - MCP_MEMORY_USE_ONNX=false
+      # Optional: API key for authenticated endpoints
+      #- MCP_EXTERNAL_EMBEDDING_API_KEY=sk-xxx
+
       # Storage configuration
       - MCP_MEMORY_STORAGE_BACKEND=sqlite_vec
       - MCP_MEMORY_SQLITE_PATH=/app/data/sqlite_vec.db
@@ -41,7 +53,7 @@ services:
       # - MCP_SSL_KEY_FILE=/app/certs/key.pem
       
       # Performance tuning
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
       - MAX_RESULTS_PER_QUERY=10
       - SIMILARITY_THRESHOLD=0.7
       
@@ -74,3 +86,11 @@ services:
         reservations:
           cpus: '0.5'
           memory: 512M
+
+volumes:
+  mcp-memory-data:
+
+networks:
+  mcp-net:
+    name: mcp-net
+    external: true

@@ -1,9 +1,9 @@
 ## Slim (CPU-only) Docker image optimized for sqlite-vec + ONNX
 ## Consolidated as the primary Dockerfile to avoid confusion.
-FROM python:3.12-slim
+FROM python:3-slim
 
 # Build arguments for conditional features
-ARG SKIP_MODEL_DOWNLOAD=false
+ARG SKIP_MODEL_DOWNLOAD=true
 ARG INSTALL_EXTRA="[sqlite]"
 ARG FORCE_CPU_PYTORCH=false
 
@@ -11,11 +11,12 @@ ARG FORCE_CPU_PYTORCH=false
 ENV PYTHONUNBUFFERED=1 \
     MCP_MEMORY_STORAGE_BACKEND=sqlite_vec \
     MCP_MEMORY_SQLITE_PATH=/app/sqlite_db \
+    MCP_MEMORY_USE_ONNX=0 \
     MCP_MEMORY_BACKUPS_PATH=/app/backups \
     PYTHONPATH=/app/src \
     DOCKER_CONTAINER=1 \
     CHROMA_TELEMETRY_IMPL=none \
-    ANONYMIZED_TELEMETRY=false \
+    ANONYMIZED_TELEMETRY=true \
     HF_HUB_DISABLE_TELEMETRY=1
 
 # Set the working directory
@@ -56,30 +57,9 @@ COPY tools/docker/docker-entrypoint-unified.sh /usr/local/bin/
 # Install the package with UV (configurable dependency group)
 # First install core dependencies, then add extras to ensure all dependencies are installed
 # Use CPU-only PyTorch by default to save disk space in CI/test environments
-RUN if [ "$FORCE_CPU_PYTORCH" = "true" ] || [ "$INSTALL_EXTRA" = "[sqlite]" ]; then \
-        echo "Installing CPU-only PyTorch to save disk space..."; \
-        python -m uv pip install torch --index-url https://download.pytorch.org/whl/cpu; \
-    fi && \
-    echo "Installing core dependencies..." && \
-    python -m uv pip install -e . && \
-    if [ -n "$INSTALL_EXTRA" ] && [ "$INSTALL_EXTRA" != "[]" ]; then \
-        echo "Installing optional dependencies: ${INSTALL_EXTRA}..." && \
-        python -m uv pip install -e ".${INSTALL_EXTRA}"; \
-    fi
+RUN python -m uv pip install -e . && \
+        python -m uv pip install -e sqlite 
 
-# Conditionally pre-download ONNX models for lightweight embedding
-RUN if [ "$SKIP_MODEL_DOWNLOAD" != "true" ]; then \
-        echo "Pre-downloading ONNX embedding models..." && \
-        python -c "try:\
-            import onnxruntime as ort; \
-            print('ONNX runtime available for lightweight embeddings'); \
-            print('ONNX models will be downloaded at runtime as needed')\
-        except Exception as e:\
-            print(f'Warning: ONNX runtime not available: {e}'); \
-            print('Embedding functionality may be limited')" || echo "ONNX check failed, continuing..."; \
-    else \
-        echo "Skipping model download (SKIP_MODEL_DOWNLOAD=true)"; \
-    fi
 
 # Configure stdio for MCP communication and make entrypoints executable
 RUN chmod a+rw /dev/stdin /dev/stdout /dev/stderr && \
