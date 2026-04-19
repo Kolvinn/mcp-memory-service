@@ -1,11 +1,11 @@
 ## Slim (CPU-only) Docker image optimized for sqlite-vec + ONNX
 ## Consolidated as the primary Dockerfile to avoid confusion.
-FROM python:3-slim
+FROM python:3.12-slim
 
 # Build arguments for conditional features
 ARG SKIP_MODEL_DOWNLOAD=true
-ARG INSTALL_EXTRA="[sqlite]"
-ARG FORCE_CPU_PYTORCH=false
+#ARG INSTALL_EXTRA="[sqlite]"
+#ARG FORCE_CPU_PYTORCH=false
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -16,7 +16,7 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app/src \
     DOCKER_CONTAINER=1 \
     CHROMA_TELEMETRY_IMPL=none \
-    ANONYMIZED_TELEMETRY=true \
+    ANONYMIZED_TELEMETRY=false \
     HF_HUB_DISABLE_TELEMETRY=1
 
 # Set the working directory
@@ -53,12 +53,12 @@ COPY scripts/utils/memory_wrapper_uv.py ./memory_wrapper_uv.py
 COPY tools/docker/docker-entrypoint.sh /usr/local/bin/
 COPY tools/docker/docker-entrypoint-persistent.sh /usr/local/bin/
 COPY tools/docker/docker-entrypoint-unified.sh /usr/local/bin/
-
+COPY tools/docker/test_ollama.py /app/test_ollama.py
 # Install the package with UV (configurable dependency group)
 # First install core dependencies, then add extras to ensure all dependencies are installed
 # Use CPU-only PyTorch by default to save disk space in CI/test environments
-RUN python -m uv pip install -e . && \
-        python -m uv pip install -e sqlite 
+RUN python -m uv pip install -e .
+        #python -m uv pip install -e sqlite 
 
 
 # Configure stdio for MCP communication and make entrypoints executable
@@ -75,4 +75,4 @@ EXPOSE 8000 8765
 
 # Use the unified entrypoint script by default
 # Can be overridden with docker-entrypoint.sh for backward compatibility
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint-unified.sh"]
+#ENTRYPOINT ["/usr/local/bin/docker-entrypoint-unified.sh"]

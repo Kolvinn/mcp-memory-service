@@ -79,10 +79,11 @@ if __name__ == "__main__":
     else:
         # Run HTTP only
         logger.info(f"Starting HTTP server on port {http_port}")
+        logger.info(f"STARTIES")
         uvicorn.run(
             "mcp_memory_service.web.app:app",
             host="0.0.0.0",
             port=http_port,
             reload=False,
-            log_level="info"
+            log_level="debug"
         )

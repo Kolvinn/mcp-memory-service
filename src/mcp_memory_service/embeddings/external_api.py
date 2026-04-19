@@ -105,6 +105,15 @@ class ExternalEmbeddingModel:
             ConnectionError: If the API is unreachable or returns an error.
         """
         try:
+            logger.info(
+                        f"External embedding API attempt: {self.api_url}, "
+                        f"headers: {self._get_headers()}, "
+                        f"json: {{'input': 'test', 'model': {self.model_name}}}, "
+                    )
+            logger.info(
+                        f"attempting curl via curl : {self.api_url}, "
+                        f"{self._get_headers()}, "
+                    )
             response = requests.post(
                 self.api_url,
                 headers=self._get_headers(),

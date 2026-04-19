@@ -1,0 +1,31 @@
+{
+    "name": "mcp-memory-service",
+    "dockerComposeFile": "../tools/docker/docker-compose.http.yml",
+    "service": "mcp-memory-service",
+    "workspaceFolder": "/app",
+    // Connect as root for full system control
+    "remoteUser": "root",
+
+    // Features to add to the container at runtime
+    "features": {
+        "ghcr.io/devcontainers/features/common-utils:2.5.7": {
+            "configureZsh": true,
+            "installZsh": true
+        }
+
+    },
+
+    // VS Code specific settings
+    "customizations": {
+        "vscode": {
+
+        }
+    },
+
+
+    // Ensure the venv is ready when the container starts
+    //"postCreateCommand": "uv sync",
+
+    // Keep the container running
+    "overrideCommand": false
+}
